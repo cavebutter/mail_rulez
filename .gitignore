@@ -1,6 +1,6 @@
 .env
-black.txt
-white.txt
+lists/black.txt
+lists/white.txt
 /venv
 rulez.log
-wrgpt.log
+lists/vendor.txt

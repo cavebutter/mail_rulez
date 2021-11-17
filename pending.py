@@ -5,11 +5,12 @@ import os
 ###################################################################
 #                  WHAT HAPPENS IN THIS MODULE                    #
 #                                                                 #
-#  Fetches specified number of emails  from INBOX and compares    #
+#  Fetches specified number of emails  from Pending and compares  #
 #  sender to various lists.  If sender matches an entry on a list #
 #  the message is moved to the appropriate folder.  If it does not#
 #  match, the message is moved to Pending folder for manual dispo-#
-#  sition.                                                        #
+#  sition.  This is a refresh for the pending folder so that not  #
+#  all items have to be moved manually out of pending for dispo   #
 #                                                                 #
 ###################################################################
 
@@ -45,10 +46,6 @@ def process_inbox(server, account, password, folder):
             blacklisted.append(item[0])
             mb.move(blacklisted, "INBOX.Approved_Ads")
             log["Vendor"] = len(blacklisted)
-        else:
-            pending.append(item[0])
-            mb.move(pending, "INBOX.Pending")
-            log["Pending"] = len(pending)
 
     return log
 
@@ -60,6 +57,6 @@ if __name__ == "__main__":
     account = os.getenv("jayco")
     password = os.getenv("jaypass")
 
-    inbox = process_inbox(server, account, password, "INBOX")
+    inbox = process_inbox(server, account, password, "INBOX.Pending")
 
     print(inbox)
