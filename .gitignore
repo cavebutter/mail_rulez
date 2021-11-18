@@ -5,3 +5,6 @@ lists/white.txt
 rulez.log
 lists/vendor.txt
 scratch.py
+lists/black.txt.orig
+lists/white.txt.orig
+lists/vendor.txt.orig

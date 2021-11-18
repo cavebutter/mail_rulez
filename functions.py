@@ -2,7 +2,6 @@ from imap_tools import MailBox, errors
 from datetime import datetime
 
 
-
 ###################################################################
 #                  WHAT HAPPENS IN THIS MODULE                    #
 #                                                                 #
@@ -21,6 +20,7 @@ class Mail:
         self.from_ = from_
         self.date_str = date_str
 
+
 def rm_blanks(file):
     """
     Removes blank lines from email list file
@@ -34,6 +34,7 @@ def rm_blanks(file):
             f.writelines(item)
         f.truncate()
 
+
 def open_read(file):
     """
     Open email list file and read contents into list
@@ -44,6 +45,7 @@ def open_read(file):
         list_name = f.read().split("\n")
         f.close()
     return list_name
+
 
 def remove_entry(item, file):
     """
@@ -59,6 +61,7 @@ def remove_entry(item, file):
             if line.strip("\n") != item:
                 g.write(line)
 
+
 def new_entries(file, list):
     """
     Enters new list entries to file
@@ -69,6 +72,7 @@ def new_entries(file, list):
     with open(file, "a") as f:
         for entry in list:
             f.write(str(entry) + "\n")
+
 
 def class_mail(batch):
     """
@@ -81,6 +85,7 @@ def class_mail(batch):
         item = Mail(item.uid, item.subject, item.from_, item.date_str)
         mail_list.append(item)
     return mail_list
+
 
 #  TODO look for way to more easily configure which lists to load- maybe specify in a list and loop thru?
 def process_inbox(server, account, password, folder="INBOX", limit=100):
@@ -123,16 +128,23 @@ def process_inbox(server, account, password, folder="INBOX", limit=100):
     log["uids in blacklist"] = blacklisted
     log["uids in vendorlist"] = vendorlist
 
-    #  Build list of uids to move to Pending folder
-    pending = [item.uid for item in mail_list if item.from_ not in whitelist if item.from_ not in blacklist if item.from_ not in vendorlist]
-    log["uids in pending"] = pending
     #  Move email
     mb.move(whitelisted, "INBOX.Processed")
     mb.move(blacklisted, "INBOX.Junk")
     mb.move(vendorlist, "INBOX.Approved_Ads")
-    mb.move(pending, "INBOX.Pending")
+
+    if folder == "INBOX":
+        #  Build list of uids to move to Pending folder
+        pending = [item.uid for item in mail_list if item.from_ not in whitelist if item.from_ not in blacklist if
+                   item.from_ not in vendorlist]
+        log["uids in pending"] = pending
+
+        mb.move(pending, "INBOX.Pending")
+    else:
+        pass
 
     return log
+
 
 def process_folder(list_file, server, account, password, start_folder, dest_folder):
     """
@@ -178,4 +190,3 @@ def process_folder(list_file, server, account, password, start_folder, dest_fold
     log["Date"] = event_time
 
     return log
-

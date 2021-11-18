@@ -8,8 +8,8 @@ if __name__ == "__main__":
     # Variables
     load_dotenv()
     server = os.getenv("server")
-    account = os.getenv("account")
-    password = os.getenv("password")
+    account = os.getenv("jayco")
+    password = os.getenv("jaypass")
 
     vendor = process_folder("lists/vendor.txt", server, account, password, "INBOX._Vendor", "INBOX.Approved_Ads")
     print(vendor)

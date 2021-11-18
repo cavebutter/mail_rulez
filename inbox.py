@@ -24,8 +24,8 @@ if __name__ == "__main__":
     #  Variables
     load_dotenv()
     server = os.getenv("server")
-    account = os.getenv("account")
-    password = os.getenv("password")
+    account = os.getenv("jayco")
+    password = os.getenv("jaypass")
 
     inbox = pf.process_inbox(server, account, password, "INBOX")
 
