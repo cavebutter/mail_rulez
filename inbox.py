@@ -29,7 +29,7 @@ def process_inbox(server, account, password, folder):
     with open("lists/vendor.txt", "r") as f:
         vendorlist = f.read().split("\n")
     mb = MailBox(server).login(account, password, initial_folder=folder)
-    batch = mb.fetch(limit=100, mark_seen=False, bulk=True)
+    batch = mb.fetch(limit=100, mark_seen=False, bulk=True, reverse=True, headers_only=True)
     emails = {msg.uid:msg.from_ for msg in batch}
     email_list = list(emails.items())
     for item in email_list:

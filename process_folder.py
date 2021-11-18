@@ -21,7 +21,7 @@ def process_folder(list_file, server, account, password, start_folder, dest_fold
     file_list = f.read().split("\n")
     f.close()
     mb = MailBox(server).login(account, password, initial_folder=start_folder)
-    batch = mb.fetch(limit=200, mark_seen=False, bulk=True)
+    batch = mb.fetch(limit=200, mark_seen=False, bulk=True, reverse=True)
     emails = {msg.uid:msg.from_ for msg in batch}
     email_list = list(emails.items()) # TODO is there a more elegant way to do this?
     new_items = set([item[1] for item in email_list if item[1] not in file_list])
