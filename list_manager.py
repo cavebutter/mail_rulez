@@ -1,6 +1,6 @@
 # Compare the elements of all lists to check for duplicates
 # Then ask user to choose which list they want it to remain on
-import process_folder as pf
+import functions as pf
 import os
 
 if __name__ == "__main__":
