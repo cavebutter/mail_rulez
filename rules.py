@@ -4,8 +4,7 @@ import functions as pf
 
 def poker(server, account, password):
 
-    date = datetime.now()
-    today = date.date()
+    today = datetime.now().date()
 
     # Move poker emails from inbox to Poker
     mb = MailBox(server).login(account, password, initial_folder="Inbox")
@@ -29,8 +28,7 @@ def poker(server, account, password):
 
 def linkedin(server, account, password):
 
-    date = datetime.now()
-    today = date.date()
+    today = datetime.now().date()
 
     # Move poker emails from inbox to LinkedIn
     mb = MailBox(server).login(account, password, initial_folder="Inbox")
@@ -54,10 +52,8 @@ def linkedin(server, account, password):
 
 def old_ads(server, account, password):
 
-    date = datetime.now()
-    today = date.date()
+    today = datetime.now().date()
 
-    # Move poker emails from inbox to LinkedIn
     mb = MailBox(server).login(account, password, initial_folder="Inbox.Approved_Ads")
     batch = mb.fetch(mark_seen=False, bulk=True, reverse=True, headers_only=True, limit=100)
     mail_list2 = pf.class_mail(batch)
@@ -68,11 +64,7 @@ def old_ads(server, account, password):
     return mail_list2
 
 def old_heads(server, account, password):
-
-    date = datetime.now()
-    today = date.date()
-
-    # Move poker emails from inbox to LinkedIn
+    today = datetime.now().date()
     mb = MailBox(server).login(account, password, initial_folder="Inbox.HeadHunt")
     batch = mb.fetch(mark_seen=False, bulk=True, reverse=True, headers_only=True, limit=100)
     mail_list2 = pf.class_mail(batch)
