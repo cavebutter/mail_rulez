@@ -1,8 +1,6 @@
-from imap_tools import MailBox, AND, errors
 from dotenv import load_dotenv
 import os
 import functions as pf
-from functions import Mail
 
 ###################################################################
 #                  WHAT HAPPENS IN THIS MODULE                    #

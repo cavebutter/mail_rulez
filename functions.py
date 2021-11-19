@@ -1,24 +1,16 @@
-from imap_tools import MailBox, errors
-from datetime import datetime
+from imap_tools import MailBox
+from datetime import datetime, timedelta
+import rules as r
 
 
-###################################################################
-#                  WHAT HAPPENS IN THIS MODULE                    #
-#                                                                 #
-#  1. Module reads a list of email addresses into memory          #
-#  2. Fetch all mail from specified folder and compare sender     #
-#     against list                                                #
-#  3. For all senders not in the list, add them to the list       #
-#  4. Move all emails to the specified dest folder                #
-#  5. Separate function to remove blank lines from email lists    #
-###################################################################
 
 class Mail:
-    def __init__(self, uid, subject, from_, date_str):
+    def __init__(self, uid, subject, from_, date_str, date):
         self.uid = uid
         self.subject = subject
         self.from_ = from_
         self.date_str = date_str
+        self.date = date
 
 
 def rm_blanks(file):
@@ -82,7 +74,7 @@ def class_mail(batch):
     """
     mail_list = []
     for item in batch:
-        item = Mail(item.uid, item.subject, item.from_, item.date_str)
+        item = Mail(item.uid, item.subject, item.from_, item.date_str, item.date)
         mail_list.append(item)
     return mail_list
 
@@ -100,6 +92,10 @@ def process_inbox(server, account, password, folder="INBOX", limit=100):
     :param limit: default = 100
     :return: log of actions
     """
+    # Process special rules
+    for rule in r.rules_list:
+        rule(server, account, password)
+
     mail_list = []
     log = {}
     log["process"] = "Process Inbox"
@@ -108,10 +104,12 @@ def process_inbox(server, account, password, folder="INBOX", limit=100):
     whitelist = open_read("lists/white.txt")
     blacklist = open_read("lists/black.txt")
     vendorlist = open_read("lists/vendor.txt")
+    headlist = open_read("lists/head.txt")
+
     log["whitelist count"] = len(whitelist)
     log["blacklist count"] = len(blacklist)
     log["vendorlist count"] = len(vendorlist)
-
+    log["headlist count"] = len(headlist)
     #  Fetch mail
     mb = MailBox(server).login(account, password, initial_folder=folder)
     batch = mb.fetch(limit=limit, mark_seen=False, bulk=True, reverse=True, headers_only=True)
@@ -124,14 +122,16 @@ def process_inbox(server, account, password, folder="INBOX", limit=100):
     whitelisted = [item.uid for item in mail_list if item.from_ in whitelist]
     blacklisted = [item.uid for item in mail_list if item.from_ in blacklist]
     vendorlist = [item.uid for item in mail_list if item.from_ in vendorlist]
+    headlisted = [item.uid for item in mail_list if item.from_ in headlist]
     log["uids in whitelist"] = whitelisted
     log["uids in blacklist"] = blacklisted
     log["uids in vendorlist"] = vendorlist
-
+    log["uids in headlist"] = headlisted
     #  Move email
     mb.move(whitelisted, "INBOX.Processed")
     mb.move(blacklisted, "INBOX.Junk")
     mb.move(vendorlist, "INBOX.Approved_Ads")
+    mb.move(headlisted, "INBOX.HeadHunt")
 
     if folder == "INBOX":
         #  Build list of uids to move to Pending folder
@@ -190,3 +190,19 @@ def process_folder(list_file, server, account, password, start_folder, dest_fold
     log["Date"] = event_time
 
     return log
+
+def purge_expired(server, account, password, start_folder, age_in_days):
+    log = {}
+    #  Fetch Mail
+    mb = MailBox(server).login(account, password, initial_folder=start_folder)
+    batch = mb.fetch(limit=200, mark_seen=False, bulk=True, reverse=True)
+
+    #  Class Mail
+    mail_list = class_mail(batch)
+    log["mail_list count"] = len(mail_list)
+
+    # Identify and delete expired messages
+    expired = [item.uid for item in mail_list if datetime.now() - item.date > timedelta(days=age_in_days)]
+    log["Process: Expired"] = start_folder
+    log["Expired emails"] = len(expired)
+    mb.delete(expired)

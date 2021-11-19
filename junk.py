@@ -1,4 +1,3 @@
-from imap_tools import MailBox, AND, errors
 from dotenv import load_dotenv
 import os
 from functions import process_folder

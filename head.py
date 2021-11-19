@@ -10,5 +10,5 @@ if __name__ == "__main__":
     account = os.getenv("jayco")
     password = os.getenv("jaypass")
 
-    approve = process_folder("lists/white.txt", server, account, password, "INBOX._Approved", "INBOX.Processed")
-    print(approve)
+    head = process_folder("lists/head.txt", server, account, password, "INBOX._HH", "INBOX.HeadHunt")
+    print(head)
