@@ -101,10 +101,10 @@ def process_inbox(server, account, password, folder="INBOX", limit=100):
     log["process"] = "Process Inbox"
     # Load Lists
     # Would it make any difference in terms of memory usage to load these lists when needed?
-    whitelist = open_read("lists/white.txt")
-    blacklist = open_read("lists/black.txt")
-    vendorlist = open_read("lists/vendor.txt")
-    headlist = open_read("lists/head.txt")
+    whitelist = open_read("/home/sally/mail-rulez/lists/white.txt")
+    blacklist = open_read("/home/sally/mail-rulez/lists/black.txt")
+    vendorlist = open_read("/home/sally/mail-rulez/lists/vendor.txt")
+    headlist = open_read("/home/sally/mail-rulez/lists/head.txt")
 
     log["whitelist count"] = len(whitelist)
     log["blacklist count"] = len(blacklist)
@@ -144,6 +144,72 @@ def process_inbox(server, account, password, folder="INBOX", limit=100):
         pass
 
     return log
+
+def process_inbox_maint(server, account, password, folder="INBOX", limit=500):
+    """
+    Fetches mail from specified server/account and folder.  Compares the from_ attribute against specified sender lists.
+    If a sender matches an address in a specified list, message is dispositioned according to defined rules.  If no match,
+    mail mail remains in INBOX
+    :param server: FQDN imap server
+    :param account: account email
+    :param password: account pwd
+    :param folder: default = "INBOX"
+    :param limit: default = 100
+    :return: log of actions
+    """
+    # Process special rules
+    for rule in r.rules_list:
+        rule(server, account, password)
+
+    mail_list = []
+    log = {}
+    log["process"] = "Process Inbox"
+    # Load Lists
+    # Would it make any difference in terms of memory usage to load these lists when needed?
+    whitelist = open_read("/home/sally/mail-rulez/lists/white.txt")
+    blacklist = open_read("/home/sally/mail-rulez/lists/black.txt")
+    vendorlist = open_read("/home/sally/mail-rulez/lists/vendor.txt")
+    headlist = open_read("/home/sally/mail-rulez/lists/head.txt")
+
+    log["whitelist count"] = len(whitelist)
+    log["blacklist count"] = len(blacklist)
+    log["vendorlist count"] = len(vendorlist)
+    log["headlist count"] = len(headlist)
+    #  Fetch mail
+    mb = MailBox(server).login(account, password, initial_folder=folder)
+    batch = mb.fetch(limit=limit, mark_seen=False, bulk=True, reverse=True, headers_only=True)
+
+    #  Class mail
+    mail_list = class_mail(batch)
+    log["mail_list count"] = len(mail_list)
+
+    #  Build list of uids to move to defined folders
+    whitelisted = [item.uid for item in mail_list if item.from_ in whitelist]
+    blacklisted = [item.uid for item in mail_list if item.from_ in blacklist]
+    vendorlist = [item.uid for item in mail_list if item.from_ in vendorlist]
+    headlisted = [item.uid for item in mail_list if item.from_ in headlist]
+    log["uids in whitelist"] = whitelisted
+    log["uids in blacklist"] = blacklisted
+    log["uids in vendorlist"] = vendorlist
+    log["uids in headlist"] = headlisted
+    #  Move email
+#    mb.move(whitelisted, "INBOX.Processed")
+    mb.move(blacklisted, "INBOX.Junk")
+    mb.move(vendorlist, "INBOX.Approved_Ads")
+    mb.move(headlisted, "INBOX.HeadHunt")
+
+    if folder == "INBOX":
+        #  Build list of uids to move to Pending folder
+        pending = [item.uid for item in mail_list if item.from_ not in whitelist if item.from_ not in blacklist if
+                   item.from_ not in vendorlist]
+        log["uids in pending"] = pending
+
+        mb.move(pending, "INBOX.Pending")
+    else:
+        pass
+
+    return log
+
 
 
 def process_folder(list_file, server, account, password, start_folder, dest_folder):
