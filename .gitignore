@@ -9,3 +9,4 @@ lists/black.txt.orig
 lists/white.txt.orig
 lists/vendor.txt.orig
 lists/head.txt
+/__pycache__
