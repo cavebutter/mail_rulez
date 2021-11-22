@@ -74,4 +74,15 @@ def old_heads(server, account, password):
     mb.delete(mail_to_delete)
     return mail_list2
 
-rules_list = [poker, linkedin, old_ads, old_heads]
+def delete_junk(server, account, password):
+    today = datetime.now().date()
+    mb = MailBox(server).login(account, password, initial_folder="Inbox.Junk")
+    batch = mb.fetch(mark_seen=False, bulk=True, reverse=True, headers_only=True, limit=500)
+    mail_list2 = pf.class_mail(batch)
+    for item in mail_list2:
+        item.date = item.date.date()
+    mail_to_delete = [item.uid for item in mail_list2 if today - item.date > timedelta(days=14)]
+    mb.delete(mail_to_delete)
+    return mail_list2
+
+rules_list = [poker, linkedin, old_ads, old_heads, delete_junk]
