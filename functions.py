@@ -1,8 +1,14 @@
-from imap_tools import MailBox
+from imap_tools import BaseMailBox, MailBox
 from datetime import datetime, timedelta
 import rules as r
 
+class Rule:
+    def __init__(self):
+        self.registry = []
 
+    def __call__(self, m):
+        "This method is called when some method is decorated"
+        self.registry.append(m)
 
 class Mail:
     def __init__(self, uid, subject, from_, date_str, date):
@@ -11,6 +17,55 @@ class Mail:
         self.from_ = from_
         self.date_str = date_str
         self.date = date
+
+
+class Account():
+    def __init__(self, server, email, password):
+        self.server = server
+        self.email = email
+        self.password = password
+
+    def login(self):
+        """Login to server account, return mailbox object"""
+        mb = MailBox(self.server).login(self.email, self.password)
+        return mb
+
+def fetch_class(login, folder="INBOX", age=None):
+    """
+    Fetches all messages from Account, classes them as Mail, changes date to date(), and returns list of those Mail
+    :return: list of Mail
+    """
+    classed_mail = []
+    login.folder.set(folder)
+    batch = login.fetch(mark_seen=False, bulk=True, reverse=True, headers_only=True)
+    for item in batch:
+        item = Mail(item.uid, item.subject, item.from_, item.date_str, item.date)
+        classed_mail.append(item)
+    for item in classed_mail:
+        item.date = item.date.date()
+    return classed_mail
+
+def fetch_class_100(login, folder="INBOX", age=None):
+    """
+    Fetches 100 messages from Account, classes them as Mail, changes date to date(), and returns list of those Mail
+    :return: list of Mail
+    """
+    classed_mail = []
+    login.folder.set(folder)
+    batch = login.fetch(limit=100, mark_seen=False, bulk=True, reverse=True, headers_only=True)
+    for item in batch:
+        item = Mail(item.uid, item.subject, item.from_, item.date_str, item.date)
+        classed_mail.append(item)
+    for item in classed_mail:
+        item.date = item.date.date()
+    return classed_mail
+
+def purge_old(login, folder, age):
+    """Purges all messages in specified folder over a specified age"""
+    today = datetime.now().date()
+    mail = fetch_class(login, folder=folder, age=age)
+    purge = [item.uid for item in mail if today - item.date > timedelta(days=age)]
+    login.delete(purge)
 
 
 def rm_blanks(file):
@@ -64,19 +119,6 @@ def new_entries(file, list):
     with open(file, "a") as f:
         for entry in list:
             f.write(str(entry) + "\n")
-
-
-def class_mail(batch):
-    """
-    Renders each message returned in mailbox fetch to Mail object and adds the object to a list for further processing
-    :param batch:
-    :return: list of mail objects
-    """
-    mail_list = []
-    for item in batch:
-        item = Mail(item.uid, item.subject, item.from_, item.date_str, item.date)
-        mail_list.append(item)
-    return mail_list
 
 
 #  TODO look for way to more easily configure which lists to load- maybe specify in a list and loop thru?
