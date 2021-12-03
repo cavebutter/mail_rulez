@@ -15,3 +15,5 @@ for section in config.sections():
 for account in account_list:
     for rule in rules.rules_list:
         rule(account)
+
+    pf.process_inbox(account)

@@ -1,4 +1,4 @@
-from imap_tools import BaseMailBox, MailBox
+from imap_tools import MailBox
 from datetime import datetime, timedelta
 import rules as r
 
@@ -122,21 +122,15 @@ def new_entries(file, list):
 
 
 #  TODO look for way to more easily configure which lists to load- maybe specify in a list and loop thru?
-def process_inbox(server, account, password, folder="INBOX", limit=100):
+def process_inbox(account, folder="INBOX", limit=100):
     """
     Fetches mail from specified server/account and folder.  Compares the from_ attribute against specified sender lists.
     If a sender matches an address in a specified list, message is dispositioned according to defined rules.  If no match,
     mail is sent to Pending folder.
-    :param server: FQDN imap server
-    :param account: account email
-    :param password: account pwd
-    :param folder: default = "INBOX"
-    :param limit: default = 100
-    :return: log of actions
     """
     # Process special rules
     for rule in r.rules_list:
-        rule(server, account, password)
+        rule(account)
 
     mail_list = []
     log = {}
@@ -153,11 +147,9 @@ def process_inbox(server, account, password, folder="INBOX", limit=100):
     log["vendorlist count"] = len(vendorlist)
     log["headlist count"] = len(headlist)
     #  Fetch mail
-    mb = MailBox(server).login(account, password, initial_folder=folder)
-    batch = mb.fetch(limit=limit, mark_seen=False, bulk=True, reverse=True, headers_only=True)
+    mb = account.login()
+    mail_list = fetch_class(mb)
 
-    #  Class mail
-    mail_list = class_mail(batch)
     log["mail_list count"] = len(mail_list)
 
     #  Build list of uids to move to defined folders
@@ -187,21 +179,15 @@ def process_inbox(server, account, password, folder="INBOX", limit=100):
 
     return log
 
-def process_inbox_maint(server, account, password, folder="INBOX", limit=500):
+def process_inbox_maint(account, folder="INBOX", limit=500):
     """
     Fetches mail from specified server/account and folder.  Compares the from_ attribute against specified sender lists.
     If a sender matches an address in a specified list, message is dispositioned according to defined rules.  If no match,
-    mail mail remains in INBOX
-    :param server: FQDN imap server
-    :param account: account email
-    :param password: account pwd
-    :param folder: default = "INBOX"
-    :param limit: default = 100
-    :return: log of actions
+    mail is sent to Pending folder.
     """
     # Process special rules
     for rule in r.rules_list:
-        rule(server, account, password)
+        rule(account)
 
     mail_list = []
     log = {}
@@ -218,11 +204,9 @@ def process_inbox_maint(server, account, password, folder="INBOX", limit=500):
     log["vendorlist count"] = len(vendorlist)
     log["headlist count"] = len(headlist)
     #  Fetch mail
-    mb = MailBox(server).login(account, password, initial_folder=folder)
-    batch = mb.fetch(limit=limit, mark_seen=False, bulk=True, reverse=True, headers_only=True)
+    mb = account.login()
+    mail_list = fetch_class(mb)
 
-    #  Class mail
-    mail_list = class_mail(batch)
     log["mail_list count"] = len(mail_list)
 
     #  Build list of uids to move to defined folders
@@ -252,9 +236,7 @@ def process_inbox_maint(server, account, password, folder="INBOX", limit=500):
 
     return log
 
-
-
-def process_folder(list_file, server, account, password, start_folder, dest_folder):
+def process_folder(list_file, account, start_folder, dest_folder):
     """
     Processes mail that was manually moved to a sorting folder.  Checks sender against appropriate list.  If sender is
     not in list, sender is added. All mail moved to dest folder.
@@ -272,12 +254,8 @@ def process_folder(list_file, server, account, password, start_folder, dest_fold
     file_list = open_read(list_file)
 
     #  Fetch Mail
-    mb = MailBox(server).login(account, password, initial_folder=start_folder)
-    batch = mb.fetch(limit=200, mark_seen=False, bulk=True, reverse=True)
-
-    #  Class Mail
-    mail_list = class_mail(batch)
-    log["mail_list count"] = len(mail_list)
+    mb = account.login()
+    mail_list = fetch_class(mb, start_folder)
 
     #  New addresses added to list
     new_list_entries = set([item.from_ for item in mail_list if item.from_ not in file_list])
@@ -299,18 +277,3 @@ def process_folder(list_file, server, account, password, start_folder, dest_fold
 
     return log
 
-def purge_expired(server, account, password, start_folder, age_in_days):
-    log = {}
-    #  Fetch Mail
-    mb = MailBox(server).login(account, password, initial_folder=start_folder)
-    batch = mb.fetch(limit=200, mark_seen=False, bulk=True, reverse=True)
-
-    #  Class Mail
-    mail_list = class_mail(batch)
-    log["mail_list count"] = len(mail_list)
-
-    # Identify and delete expired messages
-    expired = [item.uid for item in mail_list if datetime.now() - item.date > timedelta(days=age_in_days)]
-    log["Process: Expired"] = start_folder
-    log["Expired emails"] = len(expired)
-    mb.delete(expired)

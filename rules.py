@@ -1,13 +1,10 @@
-from imap_tools import MailBox
-from datetime import datetime, timedelta
-from functions import Account, Mail, Rule
+from functions import Rule
 import functions as pf
 
 rule = Rule()
 
 @rule
 def poker(account):
-    today = datetime.now().date()
     login = account.login()
     mail_list = pf.fetch_class(login)
     mail_to_move = [item.uid for item in mail_list if item.from_ == "dealer@wrgpt.org"]
@@ -18,7 +15,6 @@ def poker(account):
 
 @rule
 def linkedin(account):
-    today = datetime.now().date()
     login = account.login()
     # Move emails from inbox to linkedin
     mail_list = pf.fetch_class(login)
