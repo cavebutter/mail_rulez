@@ -22,3 +22,6 @@ Calls the `imap_tools.Mailbox.login()` to return a MailBox object logged in with
 
 ### Move from .env to .ini
 Next iteration will include a setup program to build the config file.
+
+### Move the `process_inbox` functions to their own module
+Getting circular import errors between `functions` and `rules`.  The process_inbox functions are the only ones that need the rules module, so I'm thinking that if I can move them to their own module, then `functions` won't have to import `rules`, and the new module can import both.

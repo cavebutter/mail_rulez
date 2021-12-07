@@ -2,6 +2,7 @@
 # The above shebang points to a virtualenv on sally
 
 import functions as pf
+import process_inbox as pi
 from functions import Account
 import configparser
 from apscheduler.schedulers.blocking import BlockingScheduler
@@ -15,11 +16,12 @@ for section in config.sections():
     account_list.append(acct)
 
 
+
 scheduler = BlockingScheduler(timezone="US/Pacific")
 for account in account_list:
 #  TODO some other way than hard-coding list locations
     #  Inbox
-    scheduler.add_job(lambda: pf.process_inbox_maint(account), "interval", minutes=5)
+    scheduler.add_job(lambda: pi.process_inbox_maint(account), "interval", minutes=5)
     #  Approved
     scheduler.add_job(lambda: pf.process_folder("/home/sally/mail-rulez/lists/white.txt", account,"INBOX._Approved", "INBOX"), "interval", minutes=4)
     #  Junk
