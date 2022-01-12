@@ -1,6 +1,7 @@
 from functions import Rule
 import functions as pf
 
+
 rule = Rule()
 
 @rule
