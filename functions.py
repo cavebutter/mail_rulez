@@ -1,5 +1,11 @@
 from imap_tools import MailBox
 from datetime import datetime, timedelta
+import smtplib, ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 class Rule:
     def __init__(self):
@@ -160,3 +166,50 @@ def process_folder(list_file, account, start_folder, dest_folder):
 
     return log
 
+
+def forward(account, sndr_to_fwd, fwd_addr, sent_mail):
+    """
+    This function will forward emails from a list of specified senders to a specified address.
+    Messages that have been forwarded are logged as tuples (date, subject) and added to the sent_mail list.
+    Messages that meet the sender criteria are checked against the sent_mail list to avoid duplicate sending.
+    sent_mail list lives in memory and starts fresh each time mail_rulez_*.py is reloaded.
+    It is hardcoded to work with jay@jay-cohen.info account as specified in the .env file.
+    :param account: will be called from the mail_rulez_*.py module
+    :param sndr_to_fwd: list.  sender addresses whose messages will be forwarded
+    :param fwd_addr:  string.  address to which messages will be forwarded
+    :param sent_mail:  list of mail already forwarded.  List of tuples (msg.date, msg.subject)
+    :return:
+    """
+    account_email = os.getenv("account_email")
+    smtp_server = os.getenv("smtp_server")
+    smtp_port = os.getenv("smtp_port")
+    password = os.getenv("password")
+
+    login = account.login()
+    for msg in login.fetch():
+        if msg.from_ in sndr_to_fwd:
+            mail_item = (msg.date, msg.subject)
+            if mail_item not in sent_mail:
+                sent_mail.append((msg.date, msg.subject))
+                message = f"""----------------------------------<br>
+        From:  {msg.from_}<br>
+        To:  {msg.to}<br>
+        Subject:  FWD: {msg.subject}<br><br>
+    
+        {msg.html}"""
+
+                ######  EMAIL  #######
+
+                mail = MIMEMultipart()
+                mail["Subject"] = msg.subject
+                mail["From"] = account_email
+                mail["To"] = fwd_addr
+                mail.attach(MIMEText(message, "html"))
+
+                #  Try to connect to mailserver and send
+                context = ssl.create_default_context()
+                with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
+                    server.login(account_email, password)
+                    server.sendmail(account_email, fwd_addr, mail.as_string())
+        else:
+            continue

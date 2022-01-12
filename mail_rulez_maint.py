@@ -6,6 +6,18 @@ import process_inbox as pi
 from functions import Account
 import configparser
 from apscheduler.schedulers.blocking import BlockingScheduler
+import rules
+from dotenv import load_dotenv
+from os import getenv
+
+####Forwarding####
+pall_fwd_to = "cavebutter@gmail.com"
+pall_sndrs = ["postmaster@bluesombrero.com",
+                   "clubnews@bluesombrero.com",
+                   "chrishoglin@yahoo.com"]
+sent_mail = []
+###################
+
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -15,13 +27,13 @@ for section in config.sections():
     acct = Account(config[section]["server"],config[section]["email"], config[section]["password"])
     account_list.append(acct)
 
-
-
 scheduler = BlockingScheduler(timezone="US/Pacific")
 for account in account_list:
+    # Forwarding rules
+    scheduler.add_job(lambda: pf.forward(account, pall_sndrs, pall_fwd_to, sent_mail), "interval", minutes=1)
 #  TODO some other way than hard-coding list locations
     #  Inbox
-    scheduler.add_job(lambda: pi.process_inbox_maint(account), "interval", minutes=5)
+    scheduler.add_job(lambda: pi.process_inbox_maint(account), "interval", minutes=4)
     #  Approved
     scheduler.add_job(lambda: pf.process_folder("/home/sally/mail-rulez/lists/white.txt", account,"INBOX._Approved", "INBOX"), "interval", minutes=4)
     #  Junk
