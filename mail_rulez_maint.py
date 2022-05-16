@@ -6,9 +6,7 @@ import process_inbox as pi
 from functions import Account
 import configparser
 from apscheduler.schedulers.blocking import BlockingScheduler
-import rules
-from dotenv import load_dotenv
-from os import getenv
+
 
 ####Forwarding####
 pall_fwd_to = "cavebutter@gmail.com"
