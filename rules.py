@@ -5,6 +5,13 @@ import functions as pf
 rule = Rule()
 
 @rule
+def phone(account):
+    login = account.login()
+    mail_list = pf.fetch_class(login)
+    mail_to_move = [item.uid for item in mail_list if item.to == "iphone@jay-cohen.info"]
+    login.move(mail_to_move, "INBOX.Canton_Group")
+
+@rule
 def poker(account):
     login = account.login()
     mail_list = pf.fetch_class(login)
