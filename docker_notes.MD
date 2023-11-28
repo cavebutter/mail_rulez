@@ -5,3 +5,6 @@
 ## TODO
    * Way to customize rules post implementation.  Maybe a wizard?
    * Web interface?
+   * Allow user to review/approve folder creation
+   * Check that required folders exist on server
+   * 
